@@ -18,15 +18,22 @@ using namespace clang::ast_matchers;
 using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
+private:
+    Rewriter& rewriter_;
 public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
-    };
+    CastCallBack(Rewriter& rewriter) : rewriter_(rewriter) {}
 
-    void run(const MatchFinder::MatchResult &Result) override {
-        // Your code goes here
+    void run(const MatchFinder::MatchResult& Result) override {
+        const auto* styleCastExpr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
+        const auto locationOpenBracket = styleCastExpr->getLParenLoc();
+        const auto locationCloseBracket = styleCastExpr->getRParenLoc();
+
+        rewriter_.ReplaceText(locationOpenBracket, 1, "static_cast<");
+        rewriter_.ReplaceText(locationCloseBracket, 1, ">(");
+        rewriter_.InsertTextAfterToken(locationCloseBracket.getLocWithOffset(1), ")");
     }
 };
+
 
 class MyASTConsumer : public ASTConsumer {
 public:
