@@ -19,10 +19,9 @@ using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
 public:
-    CastCallBack(clang::Rewriter &rewriter): rewriter_(rewriter) {};
+    CastCallBack(Rewriter &rewriter): rewriter_(rewriter) {}
 
     void run(const MatchFinder::MatchResult &Result) override {
-	const auto &sourceManager = *Result.SourceManager;
 	const auto *styleCastExpr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
 
 	auto start  = styleCastExpr->getBeginLoc();
@@ -39,7 +38,7 @@ public:
 	rewriter_.InsertText(end, str_to_repl[2]); // insert ")"
     }
 private:
-    clang::Rewriter& rewriter_;
+    Rewriter &rewriter_;
 };
 
 class MyASTConsumer : public ASTConsumer {
