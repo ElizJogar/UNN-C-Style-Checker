@@ -19,13 +19,27 @@ using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
 public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
-    };
+    CastCallBack(clang::Rewriter &rewriter): rewriter_(rewriter) {};
 
     void run(const MatchFinder::MatchResult &Result) override {
-        // Your code goes here
+	const auto &sourceManager = *Result.SourceManager;
+	const auto *styleCastExpr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
+
+	auto start  = styleCastExpr->getBeginLoc();
+	auto middle = styleCastExpr->getRParenLoc();
+	auto end    = styleCastExpr->getEndLoc().getLocWithOffset(1);
+
+	std::string str_to_repl[3] = {"static_cast<", ">(", ")"};
+
+	rewriter_.RemoveText(start, 1); // delete (
+	rewriter_.RemoveText(middle, 1); // delete )
+
+	rewriter_.InsertText(start, str_to_repl[0]); // insert "static_cast<"
+	rewriter_.InsertText(middle, str_to_repl[1]); // insert ">("
+	rewriter_.InsertText(end, str_to_repl[2]); // insert ")"
     }
+private:
+    clang::Rewriter& rewriter_;
 };
 
 class MyASTConsumer : public ASTConsumer {
