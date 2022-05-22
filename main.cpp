@@ -19,26 +19,13 @@ using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
 public:
-    CastCallBack(Rewriter& rewriter): _rewriter(rewriter) {};
+    CastCallBack(Rewriter& rewriter) {
+        // Your code goes here
+    };
+
     void run(const MatchFinder::MatchResult &Result) override {
-        const auto *cast_expr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
-        auto replace_range = CharSourceRange::getCharRange(cast_expr->getLParenLoc(),
-                             cast_expr->getSubExprAsWritten()->getBeginLoc());
-        auto &source_manager = *Result.SourceManager;
-        auto type_name = Lexer::getSourceText(CharSourceRange::getTokenRange(
-                                              cast_expr->getLParenLoc().getLocWithOffset(1),
-                                              cast_expr->getRParenLoc().getLocWithOffset(-1)),
-                                              source_manager, LangOptions());
-        const auto *expr = cast_expr->getSubExprAsWritten()->IgnoreImpCasts();
-        auto new_txt_begin = ("static_cast<" + type_name + ">(").str();
-        auto new_expr = Lexer::getLocForEndOfToken(expr->getEndLoc(), 0,
-                                                   source_manager, LangOptions());
-        _rewriter.InsertText(new_expr, ")");
-        
-        _rewriter.ReplaceText(replace_range, new_txt_begin);                 
+        // Your code goes here
     }
-private:
-    Rewriter& _rewriter;
 };
 
 class MyASTConsumer : public ASTConsumer {
@@ -86,3 +73,4 @@ int main(int argc, const char **argv) {
     ClangTool Tool(Parser.getCompilations(), Parser.getSourcePathList());
     return Tool.run(newFrontendActionFactory<CStyleCheckerFrontendAction>().get());
 }
+
