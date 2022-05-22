@@ -73,3 +73,4 @@ int main(int argc, const char **argv) {
     ClangTool Tool(Parser.getCompilations(), Parser.getSourcePathList());
     return Tool.run(newFrontendActionFactory<CStyleCheckerFrontendAction>().get());
 }
+
