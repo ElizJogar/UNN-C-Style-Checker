@@ -18,16 +18,25 @@ using namespace clang::ast_matchers;
 using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
+private:
+	Rewriter* rewriter_;
 public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
-    };
+	CastCallBack(Rewriter& rewriter) {
+		rewriter_ = &rewriter;
+	};
 
-    void run(const MatchFinder::MatchResult &Result) override {
-        // Your code goes here
-    }
+	void run(const MatchFinder::MatchResult &Result) override {
+		if (const auto* E = Result.Nodes.getNodeAs<clang::CStyleCastExpr>("cast")) {
+			const auto& SM = *Result.SourceManager;
+			const auto& L = E->getLParenLoc();
+			const auto& R = E->getRParenLoc();
+			rewriter_->ReplaceText(L, 1, "static_cast<");
+			rewriter_->ReplaceText(R, 1, ">(");
+			auto endLoc = Lexer::getLocForEndOfToken(E->getEndLoc(), 0, SM, LangOptions());
+			rewriter_->InsertText(endLoc, ")");
+		}
+	}
 };
-
 class MyASTConsumer : public ASTConsumer {
 public:
     MyASTConsumer(Rewriter &rewriter) : callback_(rewriter) {
