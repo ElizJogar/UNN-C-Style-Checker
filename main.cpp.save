@@ -19,20 +19,15 @@ using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
 public:
-    CastCallBack(Rewriter& _rewriter):rewriter(_rewriter) {
+    CastCallBack(Rewriter& rewriter) {
         // Your code goes here
     };
 
     void run(const MatchFinder::MatchResult &Result) override {
-        auto csce = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
-	auto l_brace = csce->getLParenLoc();
-	auto r_brace = csce->getRParenLoc();
-	rewriter.ReplaceText(l_brace,1,"static_cast<");
-	rewriter.ReplaceText(r_brace,1,">(");
-	rewriter.InsertText(r_brace.getLocWithOffset(2),")");
+        // Your code goes here
     }
 private:
-    Rewriter& rewriter;
+
 };
 
 class MyASTConsumer : public ASTConsumer {
@@ -56,11 +51,8 @@ public:
     CStyleCheckerFrontendAction() = default;
     
     void EndSourceFileAction() override {
-	std::error_code e_r;
-	llvm::raw_fd_ostream outputFile("../test/afterASTversion.cpp",e_r,llvm::sys::fs::OF_None);
         rewriter_.getEditBuffer(rewriter_.getSourceMgr().getMainFileID())
-            .write(outputFile);
-	outputFile.close();
+            .write(llvm::outs());
     }
 
     std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI, StringRef /* file */) override {
