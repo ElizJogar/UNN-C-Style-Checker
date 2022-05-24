@@ -58,6 +58,11 @@ public:
     CStyleCheckerFrontendAction() = default;
     
     void EndSourceFileAction() override {
+		std::error_code EC;
+		llvm::raw_fd_ostream out("../test/out.cpp", EC, llvm::sys::fs::OF_None);
+		rewriter_.getEditBuffer(rewriter_.getSourceMgr().getMainFileID())
+            .write(out);
+		out.close();
         rewriter_.getEditBuffer(rewriter_.getSourceMgr().getMainFileID())
             .write(llvm::outs());
     }
