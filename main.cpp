@@ -19,13 +19,22 @@ using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
 public:
-    CastCallBack(Rewriter& rewriter) {
+    CastCallBack(Rewriter& rewriter):rwrtr(rewriter) {
         // Your code goes here
     };
 
     void run(const MatchFinder::MatchResult &Result) override {
         // Your code goes here
+	const auto* castExprPtr = Result.Nodes.getNodeAs<clang::CStyleCastExpr>("cast");
+	auto LParenBraceLoc = castExprPtr->getLParenLoc();
+	auto RParenBraceLoc = castExprPtr->getRParenLoc();
+	rwrtr.ReplaceText(LParenBraceLoc,"static_cast<");
+	rwrtr.ReplaceText(RParenBraceLoc,">(");
+	auto endOfStmt=RParenBraceLoc.getLocWithOffset(2);
+	rwrtr.ReplaceText(endOfStmt,")");
     }
+private:
+Rewriter& rwrtr;
 };
 
 class MyASTConsumer : public ASTConsumer {
