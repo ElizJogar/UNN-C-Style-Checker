@@ -25,14 +25,14 @@ public:
 
     void run(const MatchFinder::MatchResult &Result) override {
         // Your code goes here
-   		auto cstmtptr = Result.Nodes.getNodeAs<clang::CStyleCastExpr>("cast");
-	    auto l_brace = cstmtptr->getLParenLoc();
-	    auto r_brace = cstmtptr->getRParenLoc();
-	    _rewriter.RemoveText(l_brace,1);
-	    _rewriter.RemoveText(r_brace,1);
-	    _rewriter.InsertText(l_brace,"static_cast<");
-	    _rewriter.InsertText(r_brace,">(");
-	    _rewriter.InsertText(r_brace.getLocWithOffset(2),")");
+   	auto cstmtptr = Result.Nodes.getNodeAs<clang::CStyleCastExpr>("cast");
+	auto l_brace = cstmtptr->getLParenLoc();
+	auto r_brace = cstmtptr->getRParenLoc();
+	_rewriter.RemoveText(l_brace,1);
+	_rewriter.RemoveText(r_brace,1);
+	_rewriter.InsertText(l_brace,"static_cast<");
+	_rewriter.InsertText(r_brace,">(");
+	_rewriter.InsertText(r_brace.getLocWithOffset(2),")");
     }
 
 private:
