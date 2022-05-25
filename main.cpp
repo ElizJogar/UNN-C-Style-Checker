@@ -30,10 +30,8 @@ public:
 			const auto& RParenLoc = cSCExpr->getRParenLoc();
 			
 			// change to static_cast
-			rewriter.RemoveText(LParenLoc, 1);
-			rewriter.InsertText(LParenLoc, "static_cast<", false, false);
-			rewriter.RemoveText(RParenLoc, 1);
-			rewriter.InsertText(RParenLoc, ">", false, false);
+			rewriter.ReplaceText(LParenLoc, 1, "static_cast<");
+			rewriter.ReplaceText(RParenLoc, 1, ">");
 			
 			// go to DeclRefExpr
 			const auto implicitFirst = cSCExpr->child_begin();
