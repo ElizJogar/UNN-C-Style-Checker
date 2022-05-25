@@ -27,17 +27,17 @@ public:
 
     void run(const MatchFinder::MatchResult& Result) override {
         auto castNode = Result.Nodes.getNodeAs<clang::CStyleCastExpr>("cast"); // Get AST node bind to id = "cast"
-        auto leftSL = castNode->getLParenLoc(); // Get left SourceLocation
-        auto rightSL = castNode->getRParenLoc(); // Get right SourceLocation
-        auto endSL = castNode->getEndLoc(); // Get SourceLocation on end
-        
-        // Initial source = "(int)f"
 
-        mRewriter.RemoveText(leftSL, 1); // Remove '(' --> "int)f"
-        mRewriter.InsertText(leftSL, "static_cast<"); // Insert "static_cast<" --> "static_cast<int)f"
-        mRewriter.RemoveText(rightSL, 1); // Remove ')' --> "static_cast<intf"
-        mRewriter.InsertText(rightSL, ">("); // Insert ">(" --> "static_cast<int>(f"
-        mRewriter.InsertText(endSL.getLocWithOffset(1), ")"); // Insert ")" behind "f" --> "static_cast<int>(f)"
+        if (castNode) {
+            auto leftSL = castNode->getLParenLoc(); // Get left SourceLocation
+            auto rightSL = castNode->getRParenLoc(); // Get right SourceLocation
+
+            // Initial source = "(int)f"
+
+            mRewriter.ReplaceText(leftSL, 1, "static_cast<"); // Remove '(' --> "int)f" and insert "static_cast<" --> "static_cast<int)f"
+            mRewriter.ReplaceText(rightSL, 1, ">("); // Remove ')' --> "static_cast<intf" and insert ">(" --> "static_cast<int>(f"
+            mRewriter.InsertText(Lexer::getLocForEndOfToken(castNode->getEndLoc(), 0, *Result.SourceManager, Result.Context->getLangOpts()), ")"); // Insert ")" behind "f" --> "static_cast<int>(f)"
+        }
     }
 };
 
