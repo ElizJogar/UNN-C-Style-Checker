@@ -34,6 +34,7 @@ public:
 	    _rewriter.InsertText(r_brace,">(");
 	    _rewriter.InsertText(r_brace.getLocWithOffset(2),")");
     }
+
 private:
     Rewriter& _rewriter;
 };
