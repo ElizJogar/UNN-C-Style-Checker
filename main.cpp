@@ -29,10 +29,22 @@ public:
     void run(const MatchFinder::MatchResult &Result) override {
         // Your code goes here
         const auto* styleCastExpr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
+	if (styleCastExpr == nullptr) {
+	    return;
+	}
 	const auto rightBracketPosition = styleCastExpr->getRParenLoc();
-        _rewriter.ReplaceText(styleCastExpr->getLParenLoc(), 1, "static_cast<");
+	const auto leftBracketPosition = styleCastExpr->getLParenLoc();
+
+	const auto endPosition = styleCastExpr->getEndLoc();
+
+	const auto declExpIter = styleCastExpr->child_begin()->child_begin()->child_begin();
+	const DeclRefExpr* declExp = (DeclRefExpr*)(*declExpIter);
+	const auto varName = declExp->getNameInfo().getAsString();
+
+
+        _rewriter.ReplaceText(leftBracketPosition, 1, "static_cast<");
         _rewriter.ReplaceText(rightBracketPosition, 1, ">(");
-        _rewriter.InsertTextAfterToken(rightBracketPosition.getLocWithOffset(1), ")");
+	_rewriter.InsertText(endPosition.getLocWithOffset(varName.length()), ")");
     }
 };
 
