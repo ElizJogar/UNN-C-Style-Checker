@@ -25,11 +25,19 @@ public:
 
     void run(const MatchFinder::MatchResult &Result) override {
         auto csce = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
+	if((csce!= nullptr)&&(!csce->getExprLoc().isMacroID())){
+	auto  csce_gs = csce->getSubExprAsWritten()->IgnoreImpCasts();
+	auto var_end = Lexer::getLocForEndOfToken(csce_gs->getEndLoc(), 0, *Result.SourceManager, LangOptions());
+	auto var_start = csce->getSubExprAsWritten()->getBeginLoc();
 	auto l_brace = csce->getLParenLoc();
 	auto r_brace = csce->getRParenLoc();
 	rewriter.ReplaceText(l_brace,1,"static_cast<");
-	rewriter.ReplaceText(r_brace,1,">(");
-	rewriter.InsertText(r_brace.getLocWithOffset(2),")");
+	rewriter.ReplaceText(CharSourceRange::getCharRange(r_brace,var_start),">");
+	if(!isa<ParenExpr>(csce_gs)){
+	rewriter.InsertText(var_start, "(");
+	rewriter.InsertText(var_end, ")");
+	}
+	}
     }
 private:
     Rewriter& rewriter;
