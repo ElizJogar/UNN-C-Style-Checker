@@ -24,7 +24,7 @@ public:
 
     void run(const MatchFinder::MatchResult &Result) override {
     	const auto *styleCastExpr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
-        if (styleCastExpr != nullptr) {
+        if (styleCastExpr != nullptr && styleCastExpr->getCastKind() != CK_ToVoid) {
 	    //get location before and after type
 	    auto lParenLoc  = styleCastExpr->getLParenLoc();
 	    auto rParenLoc = styleCastExpr->getRParenLoc();
