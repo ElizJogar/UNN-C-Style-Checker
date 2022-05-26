@@ -2,7 +2,6 @@
 #include <sstream>
 
 #include <llvm/Support/CommandLine.h>
-#include <llvm/Support/Error.h>
 
 #include <clang/ASTMatchers/ASTMatchFinder.h>
 #include <clang/ASTMatchers/ASTMatchers.h>
@@ -19,13 +18,31 @@ using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
 public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
-    };
+	CastCallBack(Rewriter& rewriter) : rewriter_(rewriter) { }
 
-    void run(const MatchFinder::MatchResult &Result) override {
-        // Your code goes here
+	virtual void run(const MatchFinder::MatchResult& Result) {
+	const auto *CastExpr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
+	auto &SM = *Result.SourceManager;
+
+	auto DestTypeString = Lexer::getSourceText(CharSourceRange::getTokenRange(
+                               CastExpr->getLParenLoc().getLocWithOffset(1),
+                               CastExpr->getRParenLoc().getLocWithOffset(-1)),
+                               SM, Result.Context->getLangOpts());
+
+	auto s = ("static_cast<" + DestTypeString + ">(").str();
+	auto Range = CharSourceRange::getCharRange(
+			CastExpr->getLParenLoc(),
+			CastExpr->getSubExprAsWritten()->getBeginLoc());
+
+	rewriter_.ReplaceText(Range, s);
+
+	const auto *SubExpr = CastExpr->getSubExprAsWritten()->IgnoreImpCasts();
+	auto EndSubExpr = Lexer::getLocForEndOfToken(SubExpr->getEndLoc(), 0, SM, Result.Context->getLangOpts());
+
+ 	rewriter_.InsertText(EndSubExpr,")");
     }
+private:
+    Rewriter& rewriter_;
 };
 
 class MyASTConsumer : public ASTConsumer {
@@ -47,7 +64,6 @@ private:
 class CStyleCheckerFrontendAction : public ASTFrontendAction {
 public:
     CStyleCheckerFrontendAction() = default;
-    
     void EndSourceFileAction() override {
         rewriter_.getEditBuffer(rewriter_.getSourceMgr().getMainFileID())
             .write(llvm::outs());
@@ -65,11 +81,9 @@ private:
 static llvm::cl::OptionCategory CastMatcherCategory("cast-matcher options");
 
 int main(int argc, const char **argv) {
-    // Ubuntu 20
-    auto Parser = llvm::ExitOnError()(CommonOptionsParser::create(argc, argv, CastMatcherCategory));
-    // For Ubuntu 18, use the old Clang API to construct the CommonOptionsParser:
-    // CommonOptionsParser Parser(argc, argv, CastMatcherCategory);
+    CommonOptionsParser OptionsParser(argc, argv, CastMatcherCategory);
+    ClangTool Tool(OptionsParser.getCompilations(),
+            OptionsParser.getSourcePathList());
 
-    ClangTool Tool(Parser.getCompilations(), Parser.getSourcePathList());
     return Tool.run(newFrontendActionFactory<CStyleCheckerFrontendAction>().get());
 }
