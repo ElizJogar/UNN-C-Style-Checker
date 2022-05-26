@@ -12,20 +12,34 @@
 #include <clang/Tooling/Tooling.h>
 #include <clang/Rewrite/Core/Rewriter.h>
 #include <clang/Frontend/CompilerInstance.h>
-
 using namespace clang;
 using namespace clang::ast_matchers;
 using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
 public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
+    CastCallBack(Rewriter& rewriter):r(rewriter) {
     };
 
     void run(const MatchFinder::MatchResult &Result) override {
-        // Your code goes here
+        auto E = Result.Nodes.getNodeAs<clang::CStyleCastExpr>("cast");
+        if((E==nullptr)||(E->getExprLoc().isMacroID()) ) return;
+        else {
+          auto b = E->getLParenLoc();
+          auto e = E->getRParenLoc();
+          auto variable_end = 
+          Lexer::getLocForEndOfToken(E->getSubExprAsWritten()->IgnoreImpCasts()->getEndLoc(), 0, *Result.SourceManager, LangOptions());
+          auto variable_start =  E->getSubExprAsWritten()->getBeginLoc();
+          r.ReplaceText(b,"static_cast<");
+          r.ReplaceText(CharSourceRange::getCharRange(e,variable_start),">");
+          if(!isa<ParenExpr>(E->getSubExprAsWritten()->IgnoreImpCasts())){
+            r.InsertText(variable_start, "(");
+            r.InsertText(variable_end, ")");
+          }
+        }
     }
+private:
+    Rewriter& r;
 };
 
 class MyASTConsumer : public ASTConsumer {
@@ -49,8 +63,11 @@ public:
     CStyleCheckerFrontendAction() = default;
     
     void EndSourceFileAction() override {
-        rewriter_.getEditBuffer(rewriter_.getSourceMgr().getMainFileID())
-            .write(llvm::outs());
+    SourceManager &SM = rewriter_.getSourceMgr();
+    std::error_code error_code;
+    llvm::raw_fd_ostream outFile("../test/refactor.cpp", error_code, llvm::sys::fs::OF_None);
+    rewriter_.getEditBuffer(SM.getMainFileID()).write(outFile); // --> this will write the result to outFile
+    outFile.close();
     }
 
     std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI, StringRef /* file */) override {
