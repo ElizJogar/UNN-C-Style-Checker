@@ -19,7 +19,7 @@ using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
  public:
-    CastCallBack(Rewriter& rewriter) _rewriter(rewriter) {}
+    CastCallBack(Rewriter& rewriter): _rewriter(rewriter) {}
 
     void run(const MatchFinder::MatchResult &Result) override {
         auto& Source_Manager = *Result.SourceManager;
