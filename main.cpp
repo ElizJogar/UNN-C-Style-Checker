@@ -29,10 +29,11 @@ public:
             auto type = Lexer::getSourceText(CharSourceRange::getTokenRange(expr->getLParenLoc().getLocWithOffset(1),
                 expr->getRParenLoc().getLocWithOffset(-1)), *Result.SourceManager, Result.Context->getLangOpts());
 
-            std::string true_str = ("static_cast<" + type + ">(").str();
-            if (!isa<ParenExpr>(expr->getSubExprAsWritten()->IgnoreImpCasts())) {
-                rewriter.InsertText(Lexer::getLocForEndOfToken(expr->getSubExprAsWritten()->IgnoreImpCasts()->getEndLoc(),
-                    0, *Result.SourceManager, Result.Context->getLangOpts()), ")");
+            std::string true_str = ("static_cast<" + type + ">").str();
+            if (!isa<ParenExpr>(expr->getSubExprAsWritten())) {
+              true_str = ("static_cast<" + type + ">(").str();
+              rewriter.InsertText(Lexer::getLocForEndOfToken(expr->getEndLoc(), 0,
+                                  *Result.SourceManager, Result.Context->getLangOpts()), ")");
             }
             rewriter.ReplaceText(swap_range, true_str);
         }
