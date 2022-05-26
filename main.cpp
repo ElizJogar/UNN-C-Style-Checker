@@ -23,14 +23,20 @@ public:
 
     void run(const MatchFinder::MatchResult &Result) override {
         auto E = Result.Nodes.getNodeAs<clang::CStyleCastExpr>("cast");
-        auto b = E->getLParenLoc();
-        auto e = E->getRParenLoc();
-        auto est = E->getEndLoc();
-        r.RemoveText(b,1);
-        r.InsertText(b,"static_cast<");
-        r.RemoveText(e,1);
-        r.InsertText(e,">(");
-        r.InsertText(est.getLocWithOffset(1), ")");
+        if((E==nullptr)||(E->getExprLoc().isMacroID()) ) return;
+        else {
+          auto b = E->getLParenLoc();
+          auto e = E->getRParenLoc();
+          auto variable_end = 
+          Lexer::getLocForEndOfToken(E->getSubExprAsWritten()->IgnoreImpCasts()->getEndLoc(), 0, *Result.SourceManager, LangOptions());
+          auto variable_start =  E->getSubExprAsWritten()->getBeginLoc();
+          r.ReplaceText(b,"static_cast<");
+          r.ReplaceText(CharSourceRange::getCharRange(e,variable_start),">");
+          if(!isa<ParenExpr>(E->getSubExprAsWritten()->IgnoreImpCasts())){
+            r.InsertText(variable_start, "(");
+            r.InsertText(variable_end, ")");
+          }
+        }
     }
 private:
     Rewriter& r;

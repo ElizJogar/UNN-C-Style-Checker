@@ -1,5 +1,5 @@
 int main() {
-    float f;
-    int i = static_cast<int>(f);
+    float fooooooo;
+    int i = static_cast<int>(fooooooo);
     return 0;
 }

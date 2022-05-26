@@ -1,5 +1,5 @@
 int main() {
-    float f;
-    int i = (int)f;
+    float fooooooo;
+    int i = (int)    fooooooo;
     return 0;
 }
