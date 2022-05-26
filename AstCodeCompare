@@ -1,0 +1,82 @@
+TranslationUnitDecl 0x1240088 <<invalid sloc>> <invalid sloc>
+|-TypedefDecl 0x1240960 <<invalid sloc>> <invalid sloc> implicit __int128_t '__int128'
+| `-BuiltinType 0x1240620 '__int128'
+|-TypedefDecl 0x12409d0 <<invalid sloc>> <invalid sloc> implicit __uint128_t 'unsigned __int128'
+| `-BuiltinType 0x1240640 'unsigned __int128'
+|-TypedefDecl 0x1240d48 <<invalid sloc>> <invalid sloc> implicit __NSConstantString '__NSConstantString_tag'
+| `-RecordType 0x1240ac0 '__NSConstantString_tag'
+|   `-CXXRecord 0x1240a28 '__NSConstantString_tag'
+|-TypedefDecl 0x1240de0 <<invalid sloc>> <invalid sloc> implicit __builtin_ms_va_list 'char *'
+| `-PointerType 0x1240da0 'char *'
+|   `-BuiltinType 0x1240120 'char'
+|-TypedefDecl 0x127de18 <<invalid sloc>> <invalid sloc> implicit __builtin_va_list '__va_list_tag [1]'
+| `-ConstantArrayType 0x127ddc0 '__va_list_tag [1]' 1
+|   `-RecordType 0x1240ed0 '__va_list_tag'
+|     `-CXXRecord 0x1240e38 '__va_list_tag'
+`-FunctionDecl 0x127dec0 <./test/test.cpp:1:1, line:5:1> line:1:5 main 'int ()'
+  `-CompoundStmt 0x127e1c0 <col:12, line:5:1>
+    |-DeclStmt 0x127e050 <line:2:5, col:12>
+    | `-VarDecl 0x127dfe8 <col:5, col:11> col:11 used f 'float'
+    |-DeclStmt 0x127e178 <line:3:5, col:19>
+    | `-VarDecl 0x127e080 <col:5, col:18> col:9 i 'int' cinit
+    |   `-CStyleCastExpr 0x127e150 <col:13, col:18> 'int' <NoOp>
+    |     `-ImplicitCastExpr 0x127e138 <col:18> 'int' <FloatingToIntegral> part_of_explicit_cast
+    |       `-ImplicitCastExpr 0x127e120 <col:18> 'float' <LValueToRValue> part_of_explicit_cast
+    |         `-DeclRefExpr 0x127e0e8 <col:18> 'float' lvalue Var 0x127dfe8 'f' 'float'
+    `-ReturnStmt 0x127e1b0 <line:4:5, col:12>
+      `-IntegerLiteral 0x127e190 <col:12> 'int' 0
+
+
+TranslationUnitDecl 0xd0e358 <<invalid sloc>> <invalid sloc>
+|-TypedefDecl 0xd0ec30 <<invalid sloc>> <invalid sloc> implicit __int128_t '__int128'
+| `-BuiltinType 0xd0e8f0 '__int128'
+|-TypedefDecl 0xd0eca0 <<invalid sloc>> <invalid sloc> implicit __uint128_t 'unsigned __int128'
+| `-BuiltinType 0xd0e910 'unsigned __int128'
+|-TypedefDecl 0xd0f018 <<invalid sloc>> <invalid sloc> implicit __NSConstantString '__NSConstantString_tag'
+| `-RecordType 0xd0ed90 '__NSConstantString_tag'
+|   `-CXXRecord 0xd0ecf8 '__NSConstantString_tag'
+|-TypedefDecl 0xd0f0b0 <<invalid sloc>> <invalid sloc> implicit __builtin_ms_va_list 'char *'
+| `-PointerType 0xd0f070 'char *'
+|   `-BuiltinType 0xd0e3f0 'char'
+|-TypedefDecl 0xd4c078 <<invalid sloc>> <invalid sloc> implicit __builtin_va_list '__va_list_tag [1]'
+| `-ConstantArrayType 0xd4c020 '__va_list_tag [1]' 1
+|   `-RecordType 0xd0f1a0 '__va_list_tag'
+|     `-CXXRecord 0xd0f108 '__va_list_tag'
+`-FunctionDecl 0xd4c120 <./test/afterASTversion.cpp:1:1, line:5:1> line:1:5 main 'int ()'
+  `-CompoundStmt 0xd4c428 <col:12, line:5:1>
+    |-DeclStmt 0xd4c2b0 <line:2:5, col:12>
+    | `-VarDecl 0xd4c248 <col:5, col:11> col:11 used f 'float'
+    |-DeclStmt 0xd4c3e0 <line:3:5, col:32>
+    | `-VarDecl 0xd4c2e0 <col:5, col:31> col:9 i 'int' cinit
+    |   `-CXXStaticCastExpr 0xd4c3b0 <col:13, col:31> 'int' static_cast<int> <NoOp>
+    |     `-ImplicitCastExpr 0xd4c398 <col:30> 'int' <FloatingToIntegral> part_of_explicit_cast
+    |       `-ImplicitCastExpr 0xd4c380 <col:30> 'float' <LValueToRValue> part_of_explicit_cast
+    |         `-DeclRefExpr 0xd4c348 <col:30> 'float' lvalue Var 0xd4c248 'f' 'float'
+    `-ReturnStmt 0xd4c418 <line:4:5, col:12>
+      `-IntegerLiteral 0xd4c3f8 <col:12> 'int' 0TranslationUnitDecl 0xd0e358 <<invalid sloc>> <invalid sloc>
+|-TypedefDecl 0xd0ec30 <<invalid sloc>> <invalid sloc> implicit __int128_t '__int128'
+| `-BuiltinType 0xd0e8f0 '__int128'
+|-TypedefDecl 0xd0eca0 <<invalid sloc>> <invalid sloc> implicit __uint128_t 'unsigned __int128'
+| `-BuiltinType 0xd0e910 'unsigned __int128'
+|-TypedefDecl 0xd0f018 <<invalid sloc>> <invalid sloc> implicit __NSConstantString '__NSConstantString_tag'
+| `-RecordType 0xd0ed90 '__NSConstantString_tag'
+|   `-CXXRecord 0xd0ecf8 '__NSConstantString_tag'
+|-TypedefDecl 0xd0f0b0 <<invalid sloc>> <invalid sloc> implicit __builtin_ms_va_list 'char *'
+| `-PointerType 0xd0f070 'char *'
+|   `-BuiltinType 0xd0e3f0 'char'
+|-TypedefDecl 0xd4c078 <<invalid sloc>> <invalid sloc> implicit __builtin_va_list '__va_list_tag [1]'
+| `-ConstantArrayType 0xd4c020 '__va_list_tag [1]' 1
+|   `-RecordType 0xd0f1a0 '__va_list_tag'
+|     `-CXXRecord 0xd0f108 '__va_list_tag'
+`-FunctionDecl 0xd4c120 <./test/afterASTversion.cpp:1:1, line:5:1> line:1:5 main 'int ()'
+  `-CompoundStmt 0xd4c428 <col:12, line:5:1>
+    |-DeclStmt 0xd4c2b0 <line:2:5, col:12>
+    | `-VarDecl 0xd4c248 <col:5, col:11> col:11 used f 'float'
+    |-DeclStmt 0xd4c3e0 <line:3:5, col:32>
+    | `-VarDecl 0xd4c2e0 <col:5, col:31> col:9 i 'int' cinit
+    |   `-CXXStaticCastExpr 0xd4c3b0 <col:13, col:31> 'int' static_cast<int> <NoOp>
+    |     `-ImplicitCastExpr 0xd4c398 <col:30> 'int' <FloatingToIntegral> part_of_explicit_cast
+    |       `-ImplicitCastExpr 0xd4c380 <col:30> 'float' <LValueToRValue> part_of_explicit_cast
+    |         `-DeclRefExpr 0xd4c348 <col:30> 'float' lvalue Var 0xd4c248 'f' 'float'
+    `-ReturnStmt 0xd4c418 <line:4:5, col:12>
+      `-IntegerLiteral 0xd4c3f8 <col:12> 'int' 0
