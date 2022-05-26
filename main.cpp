@@ -18,13 +18,44 @@ using namespace clang::ast_matchers;
 using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
+private: Rewriter &rewriter;
 public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
-    };
+    CastCallBack(Rewriter& _rewriter): rewriter(_rewriter) {}
 
     void run(const MatchFinder::MatchResult &Result) override {
-        // Your code goes here
+    	const auto *styleCastExpr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
+        if (styleCastExpr != nullptr && styleCastExpr->getCastKind() != CK_ToVoid) {
+	    //get location before and after type
+	    auto lParenLoc  = styleCastExpr->getLParenLoc();
+	    auto rParenLoc = styleCastExpr->getRParenLoc();
+	
+       	    //remove brackets
+	    rewriter.RemoveText(lParenLoc, 1);
+	    rewriter.RemoveText(rParenLoc, 1);
+	    
+	    //add static_cast<type>
+	    rewriter.InsertText(lParenLoc, "static_cast<");
+	    rewriter.InsertText(rParenLoc, ">");
+	    
+	    auto rangeVariable = Lexer::getSourceText(CharSourceRange::getTokenRange(
+		styleCastExpr->getRParenLoc().getLocWithOffset(1),
+		styleCastExpr->getEndLoc()),
+		*Result.SourceManager,
+		LangOptions()).str();
+	    auto originalSize = rangeVariable.size();
+	    rangeVariable.erase(
+	        remove_if(
+	            rangeVariable.begin(),
+	            rangeVariable.end(),
+	            [](char symbol) { return symbol == ' '; }),
+	       rangeVariable.end());
+	       
+	    if (rangeVariable.front() != '(' && rangeVariable.back() != ')') {
+	    	rewriter.ReplaceText(rParenLoc.getLocWithOffset(1), originalSize, "(" + rangeVariable + ")");
+	    } else {
+	    	rewriter.ReplaceText(rParenLoc.getLocWithOffset(1), originalSize, rangeVariable);
+	    }
+        }
     }
 };
 
