@@ -28,11 +28,13 @@ public:
    	auto cstmtptr = Result.Nodes.getNodeAs<clang::CStyleCastExpr>("cast");
 	auto l_brace = cstmtptr->getLParenLoc();
 	auto r_brace = cstmtptr->getRParenLoc();
+	auto end_of_var = Lexer::getLocForEndOfToken(cstmtptr->getSubExprAsWritten()->IgnoreImpCasts()->getEndLoc(), 0, *Result.SourceManager, LangOptions());
+	auto start_of_var = cstmtptr->getSubExprAsWritten()->getBeginLoc();    
 	_rewriter.RemoveText(l_brace,1);
-	_rewriter.RemoveText(r_brace,1);
+	_rewriter.ReplaceText(CharSourceRange::getCharRange(r_brace, start_of_var),">");
 	_rewriter.InsertText(l_brace,"static_cast<");
-	_rewriter.InsertText(r_brace,">(");
-	_rewriter.InsertText(r_brace.getLocWithOffset(2),")");
+	_rewriter.InsertText(start_of_var, "(");
+	_rewriter.InsertText(end_of_var, ")");
     }
 
 private:
