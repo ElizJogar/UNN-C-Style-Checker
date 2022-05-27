@@ -29,9 +29,11 @@ public:
 	auto LParenBraceLoc = castExprPtr->getLParenLoc();
 	auto RParenBraceLoc = castExprPtr->getRParenLoc();
 	rwrtr.ReplaceText(LParenBraceLoc,"static_cast<");
-	rwrtr.ReplaceText(RParenBraceLoc,">(");
-	auto endOfStmt=RParenBraceLoc.getLocWithOffset(2);
-	rwrtr.ReplaceText(endOfStmt,")");
+	rwrtr.ReplaceText(RParenBraceLoc,">");
+	auto begOfStmt = castExprPtr->getSubExprAsWritten()->getBeginLoc();
+	auto endOfStmt = Lexer::getLocForEndOfToken(castExprPtr->getSubExprAsWritten()->getEndLoc(), 0, *Result.SourceManager, LangOptions());
+	rwrtr.InsertText(endOfStmt,")");
+	rwrtr.InsertText(begOfStmt, "(");
     }
 private:
 Rewriter& rwrtr;
