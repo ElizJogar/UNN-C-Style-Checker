@@ -19,13 +19,30 @@ using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
 public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
-    };
+    CastCallBack(Rewriter& rewriter) : rewriter_(rewriter) {}
 
     void run(const MatchFinder::MatchResult &Result) override {
-        // Your code goes here
+        // The matched c-cast statement was bound to 'cast'.
+        if (const CStyleCastExpr *c_cast = Result.Nodes.getNodeAs<CStyleCastExpr>("cast")) {
+            // Get source location of cast type's parenthesis
+            auto LLoc = c_cast->getLParenLoc();
+            auto RLoc = c_cast->getRParenLoc();
+            // Transform (type) -> static_cast<type>
+            rewriter_.ReplaceText(LLoc, 1, "static_cast<");
+            rewriter_.ReplaceText(RLoc, 1, ">");
+
+            // Cover a case when an expression to cast is not enclosed in parentheses
+            auto cust_exp_beg = c_cast->getSubExprAsWritten()->getBeginLoc();
+            auto cust_exp_end = c_cast->getSubExprAsWritten()->getEndLoc();
+            if (Result.SourceManager->getCharacterData(cust_exp_beg)[0] != '(') {
+                rewriter_.InsertText(cust_exp_beg, "(");
+                rewriter_.InsertTextAfterToken(cust_exp_end, ")");
+            }
+        }
     }
+
+private:
+    Rewriter& rewriter_;
 };
 
 class MyASTConsumer : public ASTConsumer {
