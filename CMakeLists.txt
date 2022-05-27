@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(c-style-cast-checker)
 
-find_package(LLVM REQUIRED CONFIG)
+find_package(LLVM REQUIRED)
+find_package(CLANG REQUIRED)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -9,7 +10,9 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
 
 include_directories(${LLVM_INCLUDE_DIRS})
+include_directories(${CLANG_INCLUDE_DIRS})
 link_directories(${LLVM_LIBRARY_DIRS})
+link_directories(${CLANG_INCLUDE_DIRS})
 
 set(CLANG_LIBS
     clangAST
