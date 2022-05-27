@@ -19,13 +19,22 @@ using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
 public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
-    };
+    CastCallBack(Rewriter& rewriter) : rewriter(rewriter) {}
 
     void run(const MatchFinder::MatchResult &Result) override {
-        // Your code goes here
+        auto cStyleCExpr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
+        if (cStyleCExpr) {
+            auto lPloc = cStyleCExpr->getLParenLoc();
+            auto rPloc = cStyleCExpr->getRParenLoc();
+            auto endLoc = cStyleCExpr->getEndLoc();
+
+            rewriter.ReplaceText(lPloc, 1, "static_cast<");
+            rewriter.ReplaceText(rPloc, 1, ">(");
+            rewriter.InsertTextAfterToken(endLoc, ")");
+        }
     }
+private:
+    Rewriter& rewriter;
 };
 
 class MyASTConsumer : public ASTConsumer {
@@ -65,10 +74,7 @@ private:
 static llvm::cl::OptionCategory CastMatcherCategory("cast-matcher options");
 
 int main(int argc, const char **argv) {
-    // Ubuntu 20
     auto Parser = llvm::ExitOnError()(CommonOptionsParser::create(argc, argv, CastMatcherCategory));
-    // For Ubuntu 18, use the old Clang API to construct the CommonOptionsParser:
-    // CommonOptionsParser Parser(argc, argv, CastMatcherCategory);
 
     ClangTool Tool(Parser.getCompilations(), Parser.getSourcePathList());
     return Tool.run(newFrontendActionFactory<CStyleCheckerFrontendAction>().get());
