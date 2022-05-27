@@ -19,13 +19,24 @@ using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
 public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
-    };
+    CastCallBack(Rewriter& rewriter) : rewriter_(rewriter) {}
 
     void run(const MatchFinder::MatchResult &Result) override {
-        // Your code goes here
+        if (const CStyleCastExpr *styleCastExpr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast")) {
+            if (styleCastExpr->getCastKind() != CK_ToVoid) {
+                rewriter_.InsertText(styleCastExpr->getLParenLoc(), "static_cast");
+                rewriter_.ReplaceText(styleCastExpr->getLParenLoc(), 1, "<");
+                rewriter_.ReplaceText(styleCastExpr->getRParenLoc(), 1, ">");
+                if(!isa<ParenExpr>(styleCastExpr->getSubExprAsWritten())) {
+                    rewriter_.InsertText(styleCastExpr->getSubExprAsWritten()->getBeginLoc(), "(");
+                    rewriter_.InsertTextAfterToken(styleCastExpr->getEndLoc(), ")");
+                }
+            }
+        }
     }
+
+private:
+    Rewriter& rewriter_;
 };
 
 class MyASTConsumer : public ASTConsumer {
@@ -47,7 +58,7 @@ private:
 class CStyleCheckerFrontendAction : public ASTFrontendAction {
 public:
     CStyleCheckerFrontendAction() = default;
-    
+
     void EndSourceFileAction() override {
         rewriter_.getEditBuffer(rewriter_.getSourceMgr().getMainFileID())
             .write(llvm::outs());
