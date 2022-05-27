@@ -27,10 +27,12 @@ public:
         if (const CStyleCastExpr *Expr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast")) {
             	_rewriter.InsertText(Expr->getLParenLoc(), "static_cast");
             	_rewriter.ReplaceText(Expr->getLParenLoc(), 1, "<");
-            	_rewriter.ReplaceText(Expr->getRParenLoc(), 1, ">(");
-            	auto tmp_expr = Lexer::getLocForEndOfToken(Expr->getEndLoc(), 0, *Result.SourceManager, Result.Context->getLangOpts());
-            	_rewriter.InsertText(tmp_expr, ")");
+            	_rewriter.ReplaceText(Expr->getRParenLoc(), 1, ">");
+            	if(!isa<ParenExpr>(Expr->getSubExprAsWritten())){
+            		_rewriter.InsertTextBefore(Expr->getSubExprAsWritten()->getBeginLoc(), "(");
+    			_rewriter.InsertTextAfterToken(Expr->getEndLoc(), ")");
             	}
+	}
     }
 };
 
