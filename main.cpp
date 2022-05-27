@@ -18,13 +18,34 @@ using namespace clang::ast_matchers;
 using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
+private:
+    Rewriter& rewriter_;
 public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
-    };
+    CastCallBack(Rewriter& rewriter) : rewriter_(rewriter) {}
 
     void run(const MatchFinder::MatchResult &Result) override {
         // Your code goes here
+	const auto* CastExpr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
+	  if (CastExpr ->getCastKind() == CK_ToVoid)
+            return;
+	  if (CastExpr ->getExprLoc().isMacroID())
+            return;
+	  auto ReplaceRange = CharSourceRange::getCharRange(
+      		CastExpr->getLParenLoc(), CastExpr->getSubExprAsWritten()->getBeginLoc());
+	  StringRef text = 
+		    Lexer::getSourceText(CharSourceRange::getTokenRange(
+						CastExpr->getLParenLoc().getLocWithOffset(1), 
+                				CastExpr->getRParenLoc().getLocWithOffset(-1)),
+						*Result.SourceManager, Result.Context->getLangOpts());
+	  std::string replaceText = ("static_cast<" + text + ">").str();
+          auto castIgnore = CastExpr->getSubExprAsWritten()->IgnoreImpCasts();
+	  if(!isa<ParenExpr>(castIgnore)){
+	      replaceText.push_back('(');
+	      rewriter_.InsertText(Lexer::getLocForEndOfToken(castIgnore->getEndLoc(),
+	      0, *Result.SourceManager,
+	      Result.Context->getLangOpts()), ")");
+	  }
+	  rewriter_.ReplaceText(ReplaceRange, replaceText);
     }
 };
 
