@@ -18,13 +18,26 @@ using namespace clang::ast_matchers;
 using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
+    Rewriter& mRewriter;
+
 public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
+    CastCallBack(Rewriter& rewriter) : mRewriter(rewriter) {
+
     };
 
-    void run(const MatchFinder::MatchResult &Result) override {
-        // Your code goes here
+    void run(const MatchFinder::MatchResult& Result) override {
+        auto castNode = Result.Nodes.getNodeAs<clang::CStyleCastExpr>("cast"); // Get AST node bind to id = "cast"
+
+        if (castNode) {
+            auto leftSL = castNode->getLParenLoc(); // Get left SourceLocation
+            auto rightSL = castNode->getRParenLoc(); // Get right SourceLocation
+
+            // Initial source = "(int)f"
+
+            mRewriter.ReplaceText(leftSL, 1, "static_cast<"); // Remove '(' --> "int)f" and insert "static_cast<" --> "static_cast<int)f"
+            mRewriter.ReplaceText(rightSL, 1, ">("); // Remove ')' --> "static_cast<intf" and insert ">(" --> "static_cast<int>(f"
+            mRewriter.InsertText(Lexer::getLocForEndOfToken(castNode->getEndLoc(), 0, *Result.SourceManager, Result.Context->getLangOpts()), ")"); // Insert ")" behind "f" --> "static_cast<int>(f)"
+        }
     }
 };
 
