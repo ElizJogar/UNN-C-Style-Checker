@@ -19,13 +19,32 @@ using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
 public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
-    };
+    CastCallBack(Rewriter& rewriter): _rewriter(rewriter) {};
 
     void run(const MatchFinder::MatchResult &Result) override {
-        // Your code goes here
+        const auto *expression = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
+
+        auto change_range = CharSourceRange::getCharRange(expression->getLParenLoc(),
+                             expression->getSubExprAsWritten()->getBeginLoc());
+
+        auto &source_manager = *Result.SourceManager;
+
+        auto type = Lexer::getSourceText(CharSourceRange::getTokenRange(
+                                              expression->getLParenLoc().getLocWithOffset(1),
+                                              expression->getRParenLoc().getLocWithOffset(-1)),
+                                              source_manager, LangOptions());
+
+        const auto *expression = expression->getSubExprAsWritten()->IgnoreImpCasts();
+        auto new_text = ("static_cast<" + type + ">(").str();
+
+        auto new_expression = Lexer::getLocForEndOfToken(expression->getEndLoc(), 0,
+                                                   source_manager, LangOptions());
+
+        _rewriter.InsertText(new_expression, ")");
+        _rewriter.ReplaceText(change_range, new_text);                 
     }
+private:
+    Rewriter& _rewriter;
 };
 
 class MyASTConsumer : public ASTConsumer {
