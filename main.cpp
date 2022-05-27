@@ -21,7 +21,7 @@ class CastCallBack : public MatchFinder::MatchCallback {
 private:
     Rewriter& rewriter_;
 public:
-    CastCallBack(Rewriter& rewriter) : rewriter_(rewriter) {};
+    CastCallBack(Rewriter& rewriter) : rewriter_(rewriter) {}
 
     void run(const MatchFinder::MatchResult &Result) override {
         // Your code goes here
