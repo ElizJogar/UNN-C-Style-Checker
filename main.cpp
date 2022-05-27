@@ -19,20 +19,33 @@ using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
 public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
-    };
-
+    CastCallBack(Rewriter& rewriter): _rewriter(rewriter) {};
     void run(const MatchFinder::MatchResult &Result) override {
-        // Your code goes here
+        const auto *cast_expression = Result.Nodes.getNodeAs<CStyleCastexpr>("cast");
+        auto replace = CharSourceRange::getCharRange(cast_expression->getLParenLoc(),
+                            cast_expression->getSubexprAsWritten()->getBeginLoc());
+        auto &src_mngmnt = *Result.SourceManager;
+        auto typename = Lexer::getSourceText(CharSourceRange::getTokenRange(
+                                            cast_expression->getLParenLoc().getLocWithOffset(1),
+                                            cast_expression->getRParenLoc().getLocWithOffset(-1)),
+                                            src_mngmnt, LangOptions());
+        const auto *expr = cast_expression->getSubexprAsWritten()->IgnoreImpCasts();
+        auto new_text_begin = ("static_cast<" + typename + ">(").str();
+        auto new_expr = Lexer::getLocForEndOfToken(expr->getEndLoc(), 0,
+                                                src_mngmnt, LangOptions());
+        _rewriter.InsertText(new_expr, ")");
+        
+        _rewriter.ReplaceText(replace, new_text_begin);                 
     }
+private:
+    Rewriter& _rewriter;
 };
 
 class MyASTConsumer : public ASTConsumer {
 public:
     MyASTConsumer(Rewriter &rewriter) : callback_(rewriter) {
         matcher_.addMatcher(
-                cStyleCastExpr(unless(isExpansionInSystemHeader())).bind("cast"), &callback_);
+                cStyleCastexpr(unless(isExpansionInSystemHeader())).bind("cast"), &callback_);
     }
 
     void HandleTranslationUnit(ASTContext &Context) override {
