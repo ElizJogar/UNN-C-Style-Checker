@@ -23,10 +23,15 @@ public:
 
     void run(const MatchFinder::MatchResult &Result) override {
         if (const CStyleCastExpr *styleCastExpr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast")) {
-            rewriter_.InsertText(styleCastExpr->getLParenLoc(), "static_cast");
-            rewriter_.ReplaceText(styleCastExpr->getLParenLoc(), 1, "<");
-            rewriter_.ReplaceText(styleCastExpr->getRParenLoc(), 1, ">(");
-            rewriter_.InsertText(Lexer::getLocForEndOfToken(styleCastExpr->getEndLoc(), 0, *Result.SourceManager, Result.Context->getLangOpts()), ")");
+            if (styleCastExpr->getCastKind() != CK_ToVoid) {
+                rewriter_.InsertText(styleCastExpr->getLParenLoc(), "static_cast");
+                rewriter_.ReplaceText(styleCastExpr->getLParenLoc(), 1, "<");
+                rewriter_.ReplaceText(styleCastExpr->getRParenLoc(), 1, ">");
+                if(!isa<ParenExpr>(styleCastExpr->getSubExprAsWritten())) {
+                    rewriter_.InsertText(styleCastExpr->getSubExprAsWritten()->getBeginLoc(), "(");
+                    rewriter_.InsertTextAfterToken(styleCastExpr->getEndLoc(), ")");
+                }
+            }
         }
     }
 
