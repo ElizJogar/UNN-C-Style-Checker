@@ -19,13 +19,39 @@ using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
 public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
-    };
+    CastCallBack(Rewriter& rewriter) : myrewriter(rewriter) {}
 
     void run(const MatchFinder::MatchResult &Result) override {
-        // Your code goes here
+    
+    
+       		if (const auto *expr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast")) {
+       		
+       		if (expr->getCastKind() == CK_ToVoid) return;
+       		
+			auto type = Lexer::getSourceText(
+			CharSourceRange::getTokenRange(
+			expr->getLParenLoc().getLocWithOffset(1),
+                                    expr->getRParenLoc().getLocWithOffset(-1)),
+                                *Result.SourceManager, LangOptions());
+
+     auto cast_str = ("static_cast<"+type+">").str();
+
+	if(!isa<ParenExpr>(expr->getSubExprAsWritten())) // if no parenteses we need to add them
+	{
+		cast_str=("static_cast<"+type+">(").str(); // add left bracket
+	
+ 		myrewriter.InsertTextAfterToken(expr->getEndLoc(), ")");	 // right bracket
+	}
+
+        myrewriter.ReplaceText(
+                        CharSourceRange::getCharRange(
+                            expr->getLParenLoc(),
+                            expr->getSubExprAsWritten()->getBeginLoc()),
+                        cast_str);
     }
+    }
+    private:
+	Rewriter& myrewriter;
 };
 
 class MyASTConsumer : public ASTConsumer {
