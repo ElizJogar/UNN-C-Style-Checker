@@ -23,7 +23,11 @@ public:
 
     void run(const MatchFinder::MatchResult &Result) override {
     
+    
        		if (const auto *expr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast")) {
+       		
+       		if (expr->getCastKind() == CK_ToVoid) return;
+       		
 			auto type = Lexer::getSourceText(
 			CharSourceRange::getTokenRange(
 			expr->getLParenLoc().getLocWithOffset(1),
@@ -36,11 +40,7 @@ public:
 	{
 		cast_str=("static_cast<"+type+">(").str(); // add left bracket
 	
- 		myrewriter.InsertText(
-                        Lexer::getLocForEndOfToken(
-                            expr->getSubExprAsWritten()->IgnoreImpCasts()->getEndLoc(),
-                            0, *Result.SourceManager, LangOptions()),
-                        ")");	 // right bracket
+ 		myrewriter.InsertTextAfterToken(expr->getEndLoc(), ")");	 // right bracket
 	}
 
         myrewriter.ReplaceText(
