@@ -26,20 +26,33 @@ public:
 
     void run(const MatchFinder::MatchResult& Result) override {
         const CStyleCastExpr* MatchedCast = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
+
+        if (MatchedCast->getExprLoc().isMacroID())
+            return;
+
+        if (MatchedCast->getCastKind() == CK_ToVoid)
+            return;
+
         if (MatchedCast) {
+
+            std::string CastText = ("static_cast<" +
+                Lexer::getSourceText(CharSourceRange::getTokenRange(
+                    MatchedCast->getLParenLoc().getLocWithOffset(1),
+                    MatchedCast->getRParenLoc().getLocWithOffset(-1)),
+                    *Result.SourceManager, LangOptions()) +
+                ">").str();
+
+            if (!isa<ParenExpr>(MatchedCast->getSubExprAsWritten())) {
+                CastText.push_back('(');
+                rewriter->InsertText(Lexer::getLocForEndOfToken(
+                    MatchedCast->getEndLoc(), 0,
+                    *Result.SourceManager, LangOptions()), ")");
+            }
+
             rewriter->ReplaceText(
                 CharSourceRange::getCharRange(MatchedCast->getLParenLoc(),
                     MatchedCast->getSubExprAsWritten()->getBeginLoc()),
-                ("static_cast<" +
-                    Lexer::getSourceText(CharSourceRange::getTokenRange(
-                        MatchedCast->getLParenLoc().getLocWithOffset(1),
-                        MatchedCast->getRParenLoc().getLocWithOffset(-1)),
-                        *Result.SourceManager, LangOptions()) +
-                    ">(").str());
-
-            rewriter->InsertText(Lexer::getLocForEndOfToken(
-                MatchedCast->getEndLoc(), 0,
-                *Result.SourceManager, LangOptions()), ")");
+                CastText);
         }
     }
 };
