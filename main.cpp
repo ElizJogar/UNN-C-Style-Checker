@@ -19,13 +19,39 @@ using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
 public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
-    };
+    CastCallBack(Rewriter& rewriter) : _rewriter(rewriter) {};
 
     void run(const MatchFinder::MatchResult &Result) override {
-        // Your code goes here
+        const auto* CExp = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
+
+        SourceManager& SourMan = *Result.SourceManager;
+
+        auto ReplaceRange = CharSourceRange::getCharRange(
+            CExp->getLParenLoc(),
+            CExp->getSubExprAsWritten()->getBeginLoc());
+
+        StringRef DestTypeString = Lexer::getSourceText(CharSourceRange::getTokenRange(
+            CExp->getLParenLoc().getLocWithOffset(1),
+            CExp->getRParenLoc().getLocWithOffset(-1)),
+            SourMan, Result.Context->getLangOpts());
+
+        const Expr* Expression = CExp->getSubExprAsWritten()->IgnoreImpCasts();
+
+        std::string CastReplaceText = ("static_cast<" + DestTypeString + ">").str();
+
+        if (!isa<ParenExpr>(Expression)) {
+            CastReplaceText.push_back('(');
+
+            _rewriter.InsertText(Lexer::getLocForEndOfToken(Expression->getEndLoc(),
+                0,
+                *Result.SourceManager,
+                Result.Context->getLangOpts()),
+                ")");
+        }
+        _rewriter.ReplaceText(ReplaceRange, CastReplaceText);
     }
+ private:
+    Rewriter& _rewriter;	
 };
 
 class MyASTConsumer : public ASTConsumer {
