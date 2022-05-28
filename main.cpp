@@ -18,13 +18,27 @@ using namespace clang::ast_matchers;
 using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
-public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
-    };
+    Rewriter& rewrite;
+ public:
+    CastCallBack(Rewriter& rewriter) rewrite(rewriter) {};
 
     void run(const MatchFinder::MatchResult &Result) override {
-        // Your code goes here
+        const auto *expr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
+        if (expr != nullptr) {
+            auto loc = CharSourceRange::getCharRange(
+                expr->getLParenLoc(), expr->getSubExprAsWritten()->getBeginLoc());
+            auto tSource = Lexer::getSourceText(
+                CharSourceRange::getTokenRange(
+                    expr->getLParenLoc().getLocWithOffset(1),
+                    expr->getRParenLoc().getLocWithOffset(-1)),
+                    *Result.SourceManager, Result.Context->getLangOpts());
+            auto result = ("static_cast<" + tSource + ">(").str();
+            rewrite.ReplaceText(loc, res);
+            auto closePL = Lexer::getLocForEndOfToken(
+                expr->getSubExprAsWritten()->IgnoreImpCasts()->getEndLoc(), 0,
+                *Result.SourceManager, Result.Context->getLangOpts());
+            rewrite.InsertText(closePL, ")");
+        }
     }
 };
 
