@@ -19,13 +19,45 @@ using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
 public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
-    };
+    CastCallBack(Rewriter &rewriter): rewriter_(rewriter) {}
 
     void run(const MatchFinder::MatchResult &Result) override {
-        // Your code goes here
+	const auto *styleCastExpr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
+
+	if(styleCastExpr == nullptr) {
+		return;
+	}
+	if (styleCastExpr->getCastKind() == CK_ToVoid) {
+		return;
+	}
+
+	auto start  = styleCastExpr->getBeginLoc();
+	auto middle = styleCastExpr->getRParenLoc();
+	auto end    = styleCastExpr->getEndLoc().getLocWithOffset(1);
+
+	std::string str_to_repl[4] = {"static_cast<", ">(", ")", ">"};
+
+	rewriter_.RemoveText(start, 1); // delete (
+	rewriter_.RemoveText(middle, 1); // delete )
+
+	rewriter_.InsertText(start, str_to_repl[0]); // insert "static_cast<"
+
+ 	const auto styleCastExprCheck = styleCastExpr->getSubExprAsWritten()->IgnoreImpCasts();
+        if(!isa<ParenExpr>(styleCastExprCheck)) {
+		rewriter_.InsertText(middle, str_to_repl[1]); // insert ">(""
+		rewriter_.InsertText(Lexer::getLocForEndOfToken(
+                               styleCastExpr->getEndLoc(),
+                               0,
+                               *Result.SourceManager,
+                               Result.Context->getLangOpts()),
+                               str_to_repl[2]); // insert ")"
+	}
+	else {
+		rewriter_.InsertText(middle, str_to_repl[3]); // insert ">"
+	}
     }
+private:
+    Rewriter &rewriter_;
 };
 
 class MyASTConsumer : public ASTConsumer {
