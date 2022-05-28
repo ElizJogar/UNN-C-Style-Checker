@@ -41,10 +41,19 @@ public:
                              sourceManager, LangOptions());
 
     const auto *expr = castExpr->getSubExprAsWritten()->IgnoreImpCasts();
-    const auto newText = ("static_cast<" + type + ">(").str();
+    auto newText = ("static_cast<" + type + ">").str();
+
+    if (!isa<ParenExpr>(castExpr->getSubExprAsWritten()->IgnoreImpCasts())) {
+      newText.append("(");
+    }
+    
     const auto endLoc = Lexer::getLocForEndOfToken(expr->getEndLoc(), 0,
                                                sourceManager, LangOptions());
-    _rewriter.InsertText(endLoc, ")");
+    
+    if (!isa<ParenExpr>(castExpr->getSubExprAsWritten()->IgnoreImpCasts())) {
+      _rewriter.InsertText(endLoc, ")");
+    }
+
     _rewriter.ReplaceText(range, newText);
   }
 };
