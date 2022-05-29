@@ -19,13 +19,32 @@ using namespace clang::tooling;
 
 class CastCallBack : public MatchFinder::MatchCallback {
 public:
-    CastCallBack(Rewriter& rewriter) {
-        // Your code goes here
-    };
+    CastCallBack(Rewriter& rewriter) : _rewriter(rewriter) {};
+    void run(const MatchFinder::MatchResult& Result) override {
+        const auto* cast_expression = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
+        if (cast_expression->getCastKind() == CK_ToVoid) return;
+        if (cast_expression->getExprLoc().isMacroID()) return;
 
-    void run(const MatchFinder::MatchResult &Result) override {
-        // Your code goes here
+        auto replace = CharSourceRange::getCharRange(cast_expression->getLParenLoc(),
+            cast_expression->getSubExprAsWritten()->getBeginLoc());
+        auto& src_mngmnt = *Result.SourceManager;
+        auto type_name = Lexer::getSourceText(CharSourceRange::getTokenRange(
+            cast_expression->getLParenLoc().getLocWithOffset(1),
+            cast_expression->getRParenLoc().getLocWithOffset(-1)),
+            src_mngmnt, LangOptions());
+        const auto* expr = cast_expression->getSubExprAsWritten()->IgnoreImpCasts();
+        auto new_text_begin = ("static_cast<" + type_name + ">").str();
+
+
+        if (!isa<ParenExpr>(cast_expression->getSubExprAsWritten()->IgnoreImpCasts())) {
+            new_text_begin.append(")");
+            _rewriter.InsertTextAfterToken(cast_expression->getEndLoc(), ")");
+        }
+
+        _rewriter.ReplaceText(replace, new_text_begin);
     }
+private:
+    Rewriter& _rewriter;
 };
 
 class MyASTConsumer : public ASTConsumer {
