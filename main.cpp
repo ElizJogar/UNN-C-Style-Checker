@@ -22,6 +22,9 @@ public:
     CastCallBack(Rewriter& rewriter) : _rewriter(rewriter) {};
     void run(const MatchFinder::MatchResult& Result) override {
         const auto* cast_expression = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
+        if (cast_expression->getCastKind() == CK_ToVoid) return;
+        if (cast_expression->getExprLoc().isMacroID()) return;
+
         auto replace = CharSourceRange::getCharRange(cast_expression->getLParenLoc(),
             cast_expression->getSubExprAsWritten()->getBeginLoc());
         auto& src_mngmnt = *Result.SourceManager;
@@ -30,10 +33,13 @@ public:
             cast_expression->getRParenLoc().getLocWithOffset(-1)),
             src_mngmnt, LangOptions());
         const auto* expr = cast_expression->getSubExprAsWritten()->IgnoreImpCasts();
-        auto new_text_begin = ("static_cast<" + type_name + ">(").str();
-        auto new_expr = Lexer::getLocForEndOfToken(expr->getEndLoc(), 0,
-            src_mngmnt, LangOptions());
-        _rewriter.InsertText(new_expr, ")");
+        auto new_text_begin = ("static_cast<" + type_name + ">").str();
+
+
+        if (!isa<ParenExpr>(cast_expression->getSubExprAsWritten()->IgnoreImpCasts())) {
+            new_text_begin.append(")");
+            _rewriter.InsertTextAfterToken(cast_expression->getEndLoc(), ")");
+        }
 
         _rewriter.ReplaceText(replace, new_text_begin);
     }
