@@ -20,22 +20,28 @@ using namespace clang::tooling;
 class CastCallBack : public MatchFinder::MatchCallback {
 public:
     CastCallBack(Rewriter& rewriter): _rewriter(rewriter) {};
+
     void run(const MatchFinder::MatchResult &Result) override {
-        const auto *cast_expression = Result.Nodes.getNodeAs<CStyleCastexpr>("cast");
-        auto replace = CharSourceRange::getCharRange(cast_expression->getLParenLoc(),
-                            cast_expression->getSubexprAsWritten()->getBeginLoc());
-        auto &src_mngmnt = *Result.SourceManager;
-        auto typename = Lexer::getSourceText(CharSourceRange::getTokenRange(
-                                            cast_expression->getLParenLoc().getLocWithOffset(1),
-                                            cast_expression->getRParenLoc().getLocWithOffset(-1)),
-                                            src_mngmnt, LangOptions());
-        const auto *expr = cast_expression->getSubexprAsWritten()->IgnoreImpCasts();
-        auto new_text_begin = ("static_cast<" + typename + ">(").str();
-        auto new_expr = Lexer::getLocForEndOfToken(expr->getEndLoc(), 0,
-                                                src_mngmnt, LangOptions());
-        _rewriter.InsertText(new_expr, ")");
-        
-        _rewriter.ReplaceText(replace, new_text_begin);                 
+         const auto *expression = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
+
+        auto change_range = CharSourceRange::getCharRange(expression->getLParenLoc(),
+                            expression->getSubExprAsWritten()->getBeginLoc());
+
+         auto &source_manager = *Result.SourceManager;
+
+        auto type = Lexer::getSourceText(CharSourceRange::getTokenRange(
+                                            expression->getLParenLoc().getLocWithOffset(1),
+                                            expression->getRParenLoc().getLocWithOffset(-1)),
+                                            source_manager, LangOptions());
+
+         const auto *expression = expression->getSubExprAsWritten()->IgnoreImpCasts();
+        auto new_text = ("static_cast<" + type + ">(").str();
+
+        auto new_expression = Lexer::getLocForEndOfToken(expression->getEndLoc(), 0,
+                                                    source_manager, LangOptions());
+
+        _rewriter.InsertText(new_expression, ")");
+        _rewriter.ReplaceText(change_range, new_text);                 
     }
 private:
     Rewriter& _rewriter;
