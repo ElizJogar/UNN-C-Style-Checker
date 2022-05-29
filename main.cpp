@@ -21,16 +21,16 @@ class CastCallBack : public MatchFinder::MatchCallback {
 public:
     CastCallBack(Rewriter& rewriter) : _rewriter(rewriter) {};
     void run(const MatchFinder::MatchResult& Result) override {
-        const auto* cast_expression = Result.Nodes.getNodeAs<CStyleCastexpr>("cast");
+        const auto* cast_expression = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
         auto replace = CharSourceRange::getCharRange(cast_expression->getLParenLoc(),
-            cast_expression->getSubexprAsWritten()->getBeginLoc());
+            cast_expression->getSubExprAsWritten()->getBeginLoc());
         auto& src_mngmnt = *Result.SourceManager;
-        auto typename = Lexer::getSourceText(CharSourceRange::getTokenRange(
+        auto type_name = Lexer::getSourceText(CharSourceRange::getTokenRange(
             cast_expression->getLParenLoc().getLocWithOffset(1),
             cast_expression->getRParenLoc().getLocWithOffset(-1)),
             src_mngmnt, LangOptions());
-        const auto* expr = cast_expression->getSubexprAsWritten()->IgnoreImpCasts();
-        auto new_text_begin = ("static_cast<" + typename + ">(").str();
+        const auto* expr = cast_expression->getSubExprAsWritten()->IgnoreImpCasts();
+        auto new_text_begin = ("static_cast<" + type_name + ">(").str();
         auto new_expr = Lexer::getLocForEndOfToken(expr->getEndLoc(), 0,
             src_mngmnt, LangOptions());
         _rewriter.InsertText(new_expr, ")");
